@@ -19,8 +19,8 @@ class Upsert
       found_keys = []
       if upsert_unique_fields.present?
         upsert_unique_fields.select do |uf|
-          uf.all?{|d| keys.include?(d)}
-        end.sort_by {|a,b| a.size <=> b.size}.last
+          uf.all?{ |d| keys.include?(d) }
+        end.sort {|a,b| a.size <=> b.size}.last
       else
         keys
       end
