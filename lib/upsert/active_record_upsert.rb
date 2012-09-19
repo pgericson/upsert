@@ -20,9 +20,15 @@ class Upsert
         selector_keys = upsert_find_longest_unique_fields(hash_keys)
         document_keys = hash_keys - selector_keys
         ActiveRecord::Base.connection_pool.with_connection do |c|
-          upsert = Upsert.new c, table_name
-          array.each do |hash|
-            upsert.row(hash.stringify_keys.slice(*selector_keys), hash.stringify_keys.slice(*document_keys))
+          time_start = Time.now
+          Upsert.batch(c, table_name) do |upsert|
+            array.each_with_index do |hash, i|
+              if i % 1000 == 0
+                puts "upsert_array, (#{i.to_s}/#{array.size.to_s}): time: " + (Time.now - time_start).to_s
+                time_start = Time.now
+              end
+              upsert.row(hash.stringify_keys.slice(*selector_keys), hash.stringify_keys.slice(*document_keys))
+            end
           end
         end
       end
