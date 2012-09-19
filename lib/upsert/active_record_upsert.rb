@@ -14,6 +14,20 @@ class Upsert
       upsert(hash.slice(*selector_keys), hash.slice(*document_keys))
     end
 
+    def upsert_array(array)
+      if array.first && array.first.is_a?(Hash)
+        hash_keys = array.first.stringify_keys.keys
+        selector_keys = upsert_find_longest_unique_fields(hash_keys)
+        document_keys = hash_keys - selector_keys
+        ActiveRecord::Base.connection_pool.with_connection do |c|
+          upsert = Upsert.new c, table_name
+          array.each do |hash|
+            upsert.row(hash.stringify_keys.slice(*selector_keys), hash.stringify_keys.slice(*document_keys))
+          end
+        end
+      end
+    end
+
   private
     def upsert_find_longest_unique_fields(keys)
       found_keys = []
